@@ -2,105 +2,187 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Molding Troubleshooter AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Molding Expert Pro - Client Demo</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f4; text-align: center; }
-        #camera-container { width: 100%; max-width: 500px; margin: auto; position: relative; background: #000; overflow: hidden; }
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --dark: #121212; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--dark); color: white; overflow-x: hidden; }
+        
+        /* Navigation Tabs */
+        .tab-bar { display: flex; background: #1e1e1e; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; transition: 0.3s; border-bottom: 3px solid transparent; opacity: 0.6; }
+        .tab.active { opacity: 1; border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: bold; }
+
+        /* Sections */
+        .page { display: none; padding: 15px; animation: fadeIn 0.4s; }
+        .active-page { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Camera & UI Elements */
+        #camera-container { width: 100%; max-width: 500px; margin: auto; position: relative; border-radius: 15px; overflow: hidden; background: #000; border: 2px solid #333; }
         video, canvas { width: 100%; display: block; }
-        #marker { position: absolute; width: 30px; height: 30px; border: 3px solid yellow; border-radius: 50%; pointer-events: none; display: none; transform: translate(-50%, -50%); }
-        .controls { padding: 20px; }
-        button { padding: 15px 25px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; }
-        #result-card { display: none; background: white; margin: 20px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: left; }
-        .ad-space { margin-top: 20px; padding: 10px; background: #eee; border: 1px dashed #ccc; font-size: 12px; }
+        select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; font-size: 16px; }
+        select { background: #333; color: white; }
+        .btn-capture { background: var(--success); color: white; font-weight: bold; font-size: 18px; }
+        .btn-export { background: var(--primary); color: white; font-weight: bold; }
+
+        /* Result & History Cards */
+        .card { background: #1e1e1e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 5px solid var(--primary); text-align: left; }
+        .badge { background: #ffc107; color: black; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        
+        #marker { position: absolute; width: 40px; height: 40px; border: 3px dashed yellow; border-radius: 50%; pointer-events: none; display: none; transform: translate(-50%, -50%); z-index: 10; }
     </style>
 </head>
 <body>
 
-    <h2>Injection Molding Flash Detector</h2>
-
-    <div id="camera-container">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="canvas" style="display:none;"></canvas>
-        <div id="marker"></div>
+    <div class="tab-bar">
+        <div class="tab active" id="tab-scan" onclick="switchPage('scan')">Scan Part</div>
+        <div class="tab" id="tab-history" onclick="switchPage('history')">Shift History</div>
     </div>
 
-    <div class="controls">
-        <button id="capture-btn">फ़ोटो लें (Capture)</button>
-        <p id="hint" style="display:none;">जहाँ फ्लैश है, वहां टच करें</p>
+    <div id="page-scan" class="page active-page">
+        <label>प्लास्टिक मटेरियल चुनें:</label>
+        <select id="materialSelect">
+            <option value="POM">POM (Polyoxymethylene)</option>
+            <option value="PBT">PBT (High Temp)</option>
+            <option value="LDPE">LDPE (Low Density)</option>
+            <option value="PCABS">PC + ABS (Alloy)</option>
+            <option value="PPTD">PP TD (Talc Filled)</option>
+            <option value="ABS">ABS (General)</option>
+        </select>
+
+        <div id="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <div id="marker"></div>
+        </div>
+
+        <button class="btn-capture" id="capture-btn">📸 समस्या की फोटो लें</button>
+        <p id="instruction" style="color:#aaa; font-size:14px;">कैमरा सक्रिय है। पार्ट को फ्रेम में रखें।</p>
+
+        <div id="result-display" class="card" style="display:none; background: #fff; color: #333;">
+            <h3 id="res-title" style="margin-top:0; color: var(--danger);">Diagnosis Result</h3>
+            <p><strong>Material:</strong> <span id="res-mat" class="badge"></span></p>
+            <p id="res-specs" style="font-size:14px; color:#666;"></p>
+            <hr>
+            <div id="res-steps"></div>
+            <button onclick="resetScan()" style="background:#444; color:white; margin-top:15px;">नया स्कैन करें</button>
+        </div>
     </div>
 
-    <div id="result-card">
-        <h3 id="problem-title" style="color: #d9534f;"></h3>
-        <p><strong>समाधान (Solution):</strong></p>
-        <ul id="solution-list"></ul>
-        <button onclick="location.reload()" style="background:#6c757d;">फिर से शुरू करें</button>
-        
-        <div class="ad-space">
-            Advertisement <br>
-            </div>
+    <div id="page-history" class="page">
+        <button class="btn-export" onclick="exportToExcel()">📊 Excel (.csv) रिपोर्ट डाउनलोड करें</button>
+        <div id="history-list"></div>
+        <button onclick="clearHistory()" style="color:var(--danger); background:none;">Clear All Records</button>
     </div>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const marker = document.getElementById('marker');
         const captureBtn = document.getElementById('capture-btn');
-        const resultCard = document.getElementById('result-card');
-        const hint = document.getElementById('hint');
+        const marker = document.getElementById('marker');
 
-        // कैमरा शुरू करें
+        // Material Database
+        const materialDB = {
+            "POM": { temp: "190-230°C", dry: "3h @ 80°C", info: "गैस वेंटिंग पर ध्यान दें।" },
+            "PBT": { temp: "240-270°C", dry: "4h @ 120°C", info: "नमी (Moisture) चेक करें।" },
+            "LDPE": { temp: "180-240°C", dry: "No", info: "फ्लैश आने की संभावना अधिक।" },
+            "PCABS": { temp: "240-280°C", dry: "4h @ 100°C", info: "कूलिंग टाइम बढ़ाएं।" },
+            "PPTD": { temp: "200-260°C", dry: "No", info: "मोल्ड की घिसाई चेक करें।" },
+            "ABS": { temp: "210-250°C", dry: "2h @ 80°C", info: "सिल्वर लाइन चेक करें।" }
+        };
+
+        // Initialize Camera
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
             .then(stream => { video.srcObject = stream; })
-            .catch(err => alert("Camera access denied"));
+            .catch(() => alert("Camera access required"));
 
-        captureBtn.addEventListener('click', () => {
-            // फ़ोटो फ्रीज करें
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active-page');
+            document.getElementById('tab-' + page).classList.add('active');
+            if(page === 'history') renderHistory();
+        }
+
+        captureBtn.onclick = () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            // Basic Quality Filter
+            const data = ctx.getImageData(0,0, canvas.width, canvas.height).data;
+            let bright = 0;
+            for(let i=0; i<data.length; i+=40) bright += data[i];
+            if(bright/(data.length/40) < 30) { alert("रोशनी कम है!"); return; }
+
             video.style.display = 'none';
             canvas.style.display = 'block';
             captureBtn.style.display = 'none';
-            hint.style.display = 'block';
-        });
+            document.getElementById('instruction').innerText = "जहाँ डिफेक्ट है, वहाँ टच करें।";
 
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            canvas.onclick = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                marker.style.left = (e.clientX - rect.left) + 'px';
+                marker.style.top = (e.clientY - rect.top) + 'px';
+                marker.style.display = 'block';
+                
+                setTimeout(() => {
+                    const prob = prompt("क्या समस्या है?\n1. Flash\n2. Short Mold\n3. Burn Mark");
+                    if(prob) showFinalResult(prob);
+                }, 200);
+            };
+        };
 
-            // मार्कर दिखाएँ
-            marker.style.left = x + 'px';
-            marker.style.top = y + 'px';
-            marker.style.display = 'block';
+        function showFinalResult(type) {
+            const mat = document.getElementById('materialSelect').value;
+            const resBox = document.getElementById('result-display');
+            resBox.style.display = 'block';
+            document.getElementById('instruction').style.display = 'none';
 
-            // समस्या का चयन करने के लिए पूछें
-            askProblem();
-        });
-
-        function askProblem() {
-            const type = confirm("क्या फ्लैश पतला और रेशे जैसा है? (Ok = पतला, Cancel = मोटा/सख्त)");
-            showResult(type ? 'thin' : 'thick');
-        }
-
-        function showResult(type) {
-            hint.style.display = 'none';
-            resultCard.style.display = 'block';
-            const title = document.getElementById('problem-title');
-            const list = document.getElementById('solution-list');
-            list.innerHTML = "";
-
-            if (type === 'thin') {
-                title.innerText = "संभावित समस्या: कम चिपचिपाहट (Thin Flash)";
-                const solutions = ["तापमान 10°C कम करें", "इंजेक्शन की गति धीमी करें", "होल्डिंग प्रेशर कम करें"];
-                solutions.forEach(s => list.innerHTML += `<li>${s}</li>`);
+            const db = materialDB[mat];
+            document.getElementById('res-mat').innerText = mat;
+            document.getElementById('res-specs').innerText = `Temp: ${db.temp} | Dry: ${db.dry}`;
+            
+            let solutions = "";
+            if(type == "1") {
+                solutions = "• क्लैम्पिंग प्रेशर बढ़ाएं।<br>• इंजेक्शन स्पीड 10% कम करें।";
+            } else if(type == "2") {
+                solutions = "• शॉट साइज बढ़ाएं।<br>• इंजेक्शन प्रेशर बढ़ाएं।";
             } else {
-                title.innerText = "संभावित समस्या: क्लैम्पिंग फोर्स की कमी (Thick Flash)";
-                const solutions = ["मशीन का टनेज (Tonnage) बढ़ाएं", "मोल्ड की पार्टिंग लाइन साफ़ करें", "इंजेक्शन प्रेशर कम करें"];
-                solutions.forEach(s => list.innerHTML += `<li>${s}</li>`);
+                solutions = "• वेंटिंग चेक करें।<br>• तापमान 5°C कम करें।";
             }
+            document.getElementById('res-steps').innerHTML = `<strong>समाधान:</strong><br>${solutions}`;
+
+            // Save to LocalStorage History
+            let history = JSON.parse(localStorage.getItem('molding_history') || '[]');
+            history.unshift({ date: new Date().toLocaleString(), mat: mat, issue: type == "1" ? "Flash" : "Other" });
+            localStorage.setItem('molding_history', JSON.stringify(history));
         }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('molding_history') || '[]');
+            list.innerHTML = history.map(h => `
+                <div class="card">
+                    <small>${h.date}</small><br>
+                    <strong>${h.mat}</strong> - ${h.issue} Resolved
+                </div>
+            `).join('');
+        }
+
+        function exportToExcel() {
+            const history = JSON.parse(localStorage.getItem('molding_history') || '[]');
+            let csv = "Date,Material,Issue\n" + history.map(h => `${h.date},${h.mat},${h.issue}`).join('\n');
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Molding_Report.csv';
+            a.click();
+        }
+
+        function resetScan() { location.reload(); }
     </script>
 </body>
 </html>

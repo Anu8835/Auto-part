@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Font Matcher - Subrata Roy</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #333; }
+        #video { width: 100%; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 10px; }
+        .btn { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin: 5px; }
+        .btn:disabled { background: #ccc; }
+        #status { margin: 15px 0; font-weight: bold; color: #555; }
+        #result-box { background: #e9ecef; padding: 10px; border-radius: 5px; margin-top: 10px; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Drawing Font Matching Tool</h2>
+    <p>Physical part ke text ko scan karein aur drawing update karein.</p>
+    
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    
+    <div>
+        <button class="btn" id="snap">Part Scan Karein</button>
+        <button class="btn" id="generate" disabled>Updated Drawing Download Karein</button>
+    </div>
+
+    <div id="status">Status: Camera ready</div>
+    
+    <div id="result-box">
+        <strong>Detected Text:</strong> <span id="scannedText">---</span>
+    </div>
+</div>
+
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snap = document.getElementById('snap');
+    const generate = document.getElementById('generate');
+    const status = document.getElementById('status');
+    const scannedTextDisplay = document.getElementById('scannedText');
+
+    let finalDetectedText = "";
+
+    // Camera Access
+    async function setupCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+    }
+
+    setupCamera();
+
+    // OCR Logic
+    snap.addEventListener('click', async () => {
+        status.innerText = "Scanning Text... Kripya wait karein";
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        const imageData = canvas.toDataURL('image/png');
+        
+        Tesseract.recognize(imageData, 'eng')
+            .then(({ data: { text } }) => {
+                // Safai: Sirf relevant material code filter karna (e.g., PP+EPM)
+                finalDetectedText = text.trim();
+                scannedTextDisplay.innerText = finalDetectedText;
+                status.innerText = "Scan Complete!";
+                generate.disabled = false;
+            })
+            .catch(err => {
+                status.innerText = "Error: Dobara koshish karein";
+                console.error(err);
+            });
+    });
+
+    // PDF Generation (Drawing Update)
+    generate.addEventListener('click', () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        status.innerText = "Generating Drawing PDF...";
+
+        // Layout Simulation (As per Drawing [cite: 1, 4])
+        doc.setFont("helvetica", "bold");
+        doc.text("TECHNICAL DRAWING UPDATE", 70, 20);
+        
+        // Detail H 
+        doc.setFontSize(10);
+        doc.text("DETAIL H (SCALE 1:1)", 20, 50);
+        doc.rect(20, 55, 60, 30); // Box simulation
+        doc.text(finalDetectedText, 30, 75); // Part se scan kiya gaya font
+
+        // Detail J [cite: 7, 8]
+        doc.text("DETAIL J (SCALE 1:1)", 20, 100);
+        doc.rect(20, 105, 60, 30);
+        doc.text(finalDetectedText, 30, 125);
+
+        // Footer info from original drawing [cite: 1]
+        doc.setFontSize(8);
+        doc.text("Ref Drawing: Subrata Roy_FRONT_MUDFLAP_ENGV_24.01.2026", 20, 280);
+
+        doc.save("Updated_Drawing.pdf");
+        status.innerText = "Drawing Downloaded!";
+    });
+</script>
+
+</body>
+</html>

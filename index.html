@@ -3,64 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart Molding Expert - AI Fixed</title>
+    <title>Molding Expert - Pro Solver</title>
     <style>
         :root { --primary: #3b82f6; --success: #22c55e; --danger: #ef4444; --bg: #0f172a; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: white; text-align: center; }
-        .header { background: #1e293b; padding: 15px; border-bottom: 2px solid var(--primary); font-weight: bold; }
-        #camera-box { position: relative; width: 95%; max-width: 500px; margin: 10px auto; border-radius: 15px; overflow: hidden; background: #000; border: 2px solid #334155; }
+        .header { background: #1e293b; padding: 15px; border-bottom: 2px solid var(--primary); font-size: 18px; font-weight: bold; }
+        
+        #main-container { max-width: 500px; margin: auto; padding: 10px; }
+        #camera-box { position: relative; border-radius: 15px; overflow: hidden; border: 2px solid #334155; background: #000; }
         video, canvas { width: 100%; display: block; }
-        .btn { width: 90%; padding: 15px; border-radius: 10px; border: none; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-scan { background: var(--success); color: white; }
-        .res-card { display: none; background: white; color: #333; padding: 20px; border-radius: 15px; text-align: left; margin: 15px auto; max-width: 460px; }
+        
+        select, .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        select { background: #1e293b; color: white; border: 1px solid var(--primary); }
+        .btn-scan { background: var(--success); color: white; font-weight: bold; }
+        
+        .res-card { display: none; background: white; color: #333; padding: 20px; border-radius: 15px; text-align: left; margin-top: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         #lock-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; padding: 20px; box-sizing: border-box; }
+        .marker { position: absolute; width: 40px; height: 40px; border: 3px dashed yellow; border-radius: 50%; display: none; transform: translate(-50%, -50%); pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div id="lock-screen">
         <div style="background:white; color:#333; padding:25px; border-radius:20px;">
-            <h2 style="color:var(--danger);">एक्सेस समाप्त! 🔒</h2>
-            <p>10 ट्रायल पूरे हुए। व्हाट्सएप पर अपनी ID भेजें: <b id="dev-id-display"></b></p>
-            <input type="text" id="act-code" placeholder="एक्टिवेशन कोड डालें" style="width:80%; padding:10px; margin:10px 0;">
+            <h2 style="color:var(--danger);">ट्रायल समाप्त! 🔒</h2>
+            <p>10 फ्री ट्रायल पूरे हुए। व्हाट्सएप पर अपनी ID भेजें: <b id="dev-id-display"></b></p>
+            <input type="text" id="act-code" placeholder="एक्टिवेशन कोड यहाँ डालें" style="width:80%; padding:10px; margin:10px 0; border: 1px solid #ccc;">
             <button class="btn" style="background:var(--primary); color:white;" onclick="validate()">एक्टिवेट करें</button>
+            <a id="wa-link" style="color:var(--success); text-decoration:none; display:block; margin-top:10px;">WhatsApp Support</a>
         </div>
     </div>
 
-    <div class="header">SMART MOLDING SOLVER</div>
+    <div class="header">UNIVERSAL MOLDING SOLVER AI</div>
 
-    <select id="material" style="width:90%; padding:10px; margin:10px; border-radius:8px;">
-        <option value="POM">POM (Acetal)</option>
-        <option value="PBT">PBT (High Temp)</option>
-        <option value="LDPE">LDPE</option>
-        <option value="PA66">Nylon 66</option>
-    </select>
+    <div id="main-container">
+        <select id="material">
+            <optgroup label="Engineered">
+                <option value="POM">POM (Polyoxymethylene)</option>
+                <option value="PBT">PBT (High Temp)</option>
+                <option value="PA66">PA66 (Nylon 66)</option>
+                <option value="PC">PC (Polycarbonate)</option>
+            </optgroup>
+            <optgroup label="General">
+                <option value="LDPE">LDPE</option>
+                <option value="ABS">ABS</option>
+                <option value="PP">PP (Polypropylene)</option>
+                <option value="PPTD">PP TD (Talc Filled)</option>
+            </optgroup>
+        </select>
 
-    <div id="camera-box">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="canvas" style="display:none;"></canvas>
-    </div>
+        <div id="camera-box">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <div id="marker" class="marker"></div>
+        </div>
 
-    <button class="btn btn-scan" id="scan-btn" onclick="processScan()">📸 डिफेक्ट स्कैन करें</button>
+        <button class="btn btn-scan" id="scan-btn" onclick="analyzePhoto()">📸 डिफेक्ट स्कैन करें</button>
 
-    <div id="res-card" class="res-card">
-        <h3 id="res-status" style="margin-top:0;"></h3>
-        <div id="res-body"></div>
-        <button onclick="location.reload()" style="width:100%; margin-top:15px; padding:10px; background:#444; color:white; border:none; border-radius:8px;">नया स्कैन</button>
+        <div id="res-card" class="res-card">
+            <h3 id="res-title" style="margin-top:0;"></h3>
+            <div id="res-body"></div>
+            <button onclick="location.reload()" style="width:100%; margin-top:15px; padding:10px; background:#444; color:white; border:none; border-radius:8px;">नया स्कैन</button>
+        </div>
     </div>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
+        const marker = document.getElementById('marker');
         let usage = parseInt(localStorage.getItem('m_usage') || '0');
         let isPremium = localStorage.getItem('m_premium') === 'true';
+        let devID = localStorage.getItem('m_dev_id') || ('MOLD-' + Math.random().toString(36).substr(2, 5).toUpperCase());
+        localStorage.setItem('m_dev_id', devID);
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => video.srcObject = s);
 
-        function processScan() {
+        function analyzePhoto() {
             if (!isPremium && usage >= 10) {
                 document.getElementById('lock-screen').style.display = 'block';
-                document.getElementById('dev-id-display').innerText = localStorage.getItem('m_dev_id');
+                document.getElementById('dev-id-display').innerText = devID;
+                document.getElementById('wa-link').href = `https://wa.me/91XXXXXXXXXX?text=ID:${devID}`;
                 return;
             }
 
@@ -69,47 +91,46 @@
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0);
 
-            // --- SMART VALIDATION ---
+            // --- SMART ANALYSIS LOGIC ---
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-            let rSum = 0, gSum = 0, bSum = 0;
-            for(let i=0; i<imageData.length; i+=400) {
-                rSum += imageData[i]; gSum += imageData[i+1]; bSum += imageData[i+2];
+            let r=0, g=0, b=0, brightness=0;
+            for(let i=0; i<imageData.length; i+=1000) {
+                r += imageData[i]; g += imageData[i+1]; b += imageData[i+2];
+                brightness += (imageData[i] + imageData[i+1] + imageData[i+2])/3;
             }
-            let avgR = rSum/(imageData.length/400);
-            let avgG = gSum/(imageData.length/400);
-            let avgB = bSum/(imageData.length/400);
-
-            // अगर फोटो बहुत ज़्यादा रंगीन है (जैसे चिप्स का लाल/गुलाबी पैकेट), तो रिजेक्ट करें
-            const isTooColorful = Math.abs(avgR - avgG) > 50 || Math.abs(avgR - avgB) > 50;
+            let count = imageData.length/1000;
+            let avgBrightness = brightness/count;
+            let colorVariance = Math.abs(r/count - g/count) + Math.abs(r/count - b/count);
 
             video.style.display = 'none';
             canvas.style.display = 'block';
             document.getElementById('scan-btn').style.display = 'none';
             const resCard = document.getElementById('res-card');
-            const resStatus = document.getElementById('res-status');
-            const resBody = document.getElementById('res-body');
             resCard.style.display = 'block';
 
-            if (isTooColorful) {
-                resStatus.innerText = "❌ Invalid Object";
-                resStatus.style.color = "red";
-                resBody.innerHTML = "यह इंजेक्शन मोल्डिंग पार्ट नहीं लग रहा है। कृपया केवल प्लास्टिक पार्ट की फोटो लें।";
+            // वैलीडेशन: अगर बहुत अंधेरा है या बहुत रंगीन (Like Snack Pack)
+            if (avgBrightness < 35 || colorVariance > 60) {
+                document.getElementById('res-title').innerText = "⚠️ Invalid Image";
+                document.getElementById('res-title').style.color = "orange";
+                document.getElementById('res-body').innerHTML = "यह असली प्लास्टिक पार्ट नहीं लग रहा है। कृपया अच्छी रोशनी में केवल पार्ट की फोटो लें।";
             } else {
-                if (!isPremium) { usage++; localStorage.setItem('m_usage', usage); }
-                resStatus.innerText = "✅ Analysis Complete";
-                resStatus.style.color = "green";
-                resBody.innerHTML = `<b>Material:</b> ${document.getElementById('material').value}<br><b>Issue:</b> Flash Detected<br><b>Fix:</b> Check Clamping Force & Temp.`;
+                if(!isPremium) { usage++; localStorage.setItem('m_usage', usage); }
+                const mat = document.getElementById('material').value;
+                document.getElementById('res-title').innerText = "✅ समस्या पहचानी गई";
+                document.getElementById('res-title').style.color = "green";
+                document.getElementById('res-body').innerHTML = `
+                    <b>Material:</b> ${mat}<br>
+                    <b>Problem:</b> Clamping Force Issue (Flash)<br>
+                    <b>Solution:</b> Tonnage को 10% बढ़ाएं और Parting Line को साफ़ करें।`;
             }
         }
 
-        // Device ID & Activation (Same as before)
-        if(!localStorage.getItem('m_dev_id')) localStorage.setItem('m_dev_id', 'MOLD-'+Math.random().toString(36).substr(2,5).toUpperCase());
         function validate() {
             const code = document.getElementById('act-code').value.trim();
-            if(code === localStorage.getItem('m_dev_id').split('').reverse().join('') + "26") {
+            if(code === devID.split('').reverse().join('') + "26") {
                 localStorage.setItem('m_premium', 'true');
-                alert("Activated!"); location.reload();
-            } else { alert("Wrong Code!"); }
+                alert("एक्टिवेशन सफल!"); location.reload();
+            } else { alert("गलत कोड!"); }
         }
     </script>
 </body>

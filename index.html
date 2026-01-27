@@ -3,186 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Molding Expert Pro - Client Demo</title>
+    <title>Molding Expert Pro - AI Solver</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --dark: #121212; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--dark); color: white; overflow-x: hidden; }
+        :root { --primary: #3b82f6; --success: #22c55e; --danger: #ef4444; --bg: #0f172a; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: white; text-align: center; }
         
-        /* Navigation Tabs */
-        .tab-bar { display: flex; background: #1e1e1e; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; transition: 0.3s; border-bottom: 3px solid transparent; opacity: 0.6; }
-        .tab.active { opacity: 1; border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: bold; }
-
-        /* Sections */
-        .page { display: none; padding: 15px; animation: fadeIn 0.4s; }
-        .active-page { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Camera & UI Elements */
-        #camera-container { width: 100%; max-width: 500px; margin: auto; position: relative; border-radius: 15px; overflow: hidden; background: #000; border: 2px solid #333; }
+        /* Premium Lock Overlay */
+        #lock-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; padding: 20px; box-sizing: border-box; }
+        .lock-card { background: white; color: #1e293b; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .device-id-box { background: #f1f5f9; padding: 10px; border-radius: 8px; font-family: monospace; font-weight: bold; color: var(--danger); margin: 15px 0; }
+        
+        /* UI Elements */
+        .header { background: #1e293b; padding: 15px; border-bottom: 2px solid var(--primary); font-weight: bold; }
+        #main-app { padding: 10px; }
+        #camera-box { position: relative; border-radius: 15px; overflow: hidden; background: #000; border: 2px solid #334155; }
         video, canvas { width: 100%; display: block; }
-        select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; font-size: 16px; }
-        select { background: #333; color: white; }
-        .btn-capture { background: var(--success); color: white; font-weight: bold; font-size: 18px; }
-        .btn-export { background: var(--primary); color: white; font-weight: bold; }
-
-        /* Result & History Cards */
-        .card { background: #1e1e1e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 5px solid var(--primary); text-align: left; }
-        .badge { background: #ffc107; color: black; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         
-        #marker { position: absolute; width: 40px; height: 40px; border: 3px dashed yellow; border-radius: 50%; pointer-events: none; display: none; transform: translate(-50%, -50%); z-index: 10; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-wa { background: #25D366; color: white; text-decoration: none; display: block; }
+        .btn-scan { background: var(--success); color: white; }
+        .input-field { width: 90%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; text-align: center; font-size: 18px; }
+        
+        .trial-info { font-size: 12px; margin-bottom: 8px; padding: 5px; border-radius: 5px; }
+        .res-card { display: none; background: white; color: #333; padding: 20px; border-radius: 15px; text-align: left; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="tab-bar">
-        <div class="tab active" id="tab-scan" onclick="switchPage('scan')">Scan Part</div>
-        <div class="tab" id="tab-history" onclick="switchPage('history')">Shift History</div>
+    <div id="lock-screen">
+        <div class="lock-card">
+            <h2 style="color: var(--danger); margin:0;">एक्सेस समाप्त! 🔒</h2>
+            <p style="font-size: 14px;">आपके 10 फ्री ट्रायल खत्म हो गए हैं। फुल एक्सेस के लिए अपनी <b>Device ID</b> व्हाट्सएप पर भेजें।</p>
+            
+            <div class="device-id-box" id="display-device-id">MOLD-XXXXX</div>
+            
+            <a id="wa-link" href="#" class="btn btn-wa">WhatsApp पर ID भेजें</a>
+            
+            <hr style="margin: 20px 0;">
+            <input type="text" id="act-code" class="input-field" placeholder="Activation Code">
+            <button class="btn" style="background:var(--primary); color:white;" onclick="validateCode()">एक्टिवेट करें</button>
+        </div>
     </div>
 
-    <div id="page-scan" class="page active-page">
-        <label>प्लास्टिक मटेरियल चुनें:</label>
-        <select id="materialSelect">
-            <option value="POM">POM (Polyoxymethylene)</option>
+    <div id="main-app">
+        <div class="header">UNIVERSAL SOLVER AI</div>
+        <div id="trial-msg" class="trial-info" style="background: var(--danger);"></div>
+
+        <select id="material" style="width:100%; padding:10px; margin:10px 0; border-radius:8px; background:#1e293b; color:white;">
+            <option value="POM">POM (Acetal)</option>
             <option value="PBT">PBT (High Temp)</option>
-            <option value="LDPE">LDPE (Low Density)</option>
-            <option value="PCABS">PC + ABS (Alloy)</option>
-            <option value="PPTD">PP TD (Talc Filled)</option>
-            <option value="ABS">ABS (General)</option>
+            <option value="LDPE">LDPE</option>
+            <option value="PA66">Nylon 66</option>
+            <option value="PC">Polycarbonate</option>
+            <option value="ABS">ABS</option>
         </select>
 
-        <div id="camera-container">
+        <div id="camera-box">
             <video id="video" autoplay playsinline></video>
             <canvas id="canvas" style="display:none;"></canvas>
-            <div id="marker"></div>
         </div>
 
-        <button class="btn-capture" id="capture-btn">📸 समस्या की फोटो लें</button>
-        <p id="instruction" style="color:#aaa; font-size:14px;">कैमरा सक्रिय है। पार्ट को फ्रेम में रखें।</p>
+        <button class="btn btn-scan" id="scan-btn" onclick="startScan()">📸 पार्ट स्कैन करें</button>
 
-        <div id="result-display" class="card" style="display:none; background: #fff; color: #333;">
-            <h3 id="res-title" style="margin-top:0; color: var(--danger);">Diagnosis Result</h3>
-            <p><strong>Material:</strong> <span id="res-mat" class="badge"></span></p>
-            <p id="res-specs" style="font-size:14px; color:#666;"></p>
-            <hr>
-            <div id="res-steps"></div>
-            <button onclick="resetScan()" style="background:#444; color:white; margin-top:15px;">नया स्कैन करें</button>
+        <div id="res-card" class="res-card">
+            <h3 style="margin-top:0;">Diagnosis Result</h3>
+            <div id="res-content"></div>
+            <button onclick="location.reload()" style="width:100%; margin-top:15px; padding:10px; background:#444; color:white; border:none; border-radius:8px;">नया स्कैन</button>
         </div>
-    </div>
-
-    <div id="page-history" class="page">
-        <button class="btn-export" onclick="exportToExcel()">📊 Excel (.csv) रिपोर्ट डाउनलोड करें</button>
-        <div id="history-list"></div>
-        <button onclick="clearHistory()" style="color:var(--danger); background:none;">Clear All Records</button>
     </div>
 
     <script>
+        const MY_WHATSAPP = "91XXXXXXXXXX"; // अपना नंबर यहाँ डालें
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const captureBtn = document.getElementById('capture-btn');
-        const marker = document.getElementById('marker');
-
-        // Material Database
-        const materialDB = {
-            "POM": { temp: "190-230°C", dry: "3h @ 80°C", info: "गैस वेंटिंग पर ध्यान दें।" },
-            "PBT": { temp: "240-270°C", dry: "4h @ 120°C", info: "नमी (Moisture) चेक करें।" },
-            "LDPE": { temp: "180-240°C", dry: "No", info: "फ्लैश आने की संभावना अधिक।" },
-            "PCABS": { temp: "240-280°C", dry: "4h @ 100°C", info: "कूलिंग टाइम बढ़ाएं।" },
-            "PPTD": { temp: "200-260°C", dry: "No", info: "मोल्ड की घिसाई चेक करें।" },
-            "ABS": { temp: "210-250°C", dry: "2h @ 80°C", info: "सिल्वर लाइन चेक करें।" }
-        };
-
-        // Initialize Camera
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(stream => { video.srcObject = stream; })
-            .catch(() => alert("Camera access required"));
-
-        function switchPage(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('page-' + page).classList.add('active-page');
-            document.getElementById('tab-' + page).classList.add('active');
-            if(page === 'history') renderHistory();
+        
+        // 1. Device ID Logic
+        function getDeviceID() {
+            let id = localStorage.getItem('m_dev_id');
+            if (!id) {
+                id = 'MOLD-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+                localStorage.setItem('m_dev_id', id);
+            }
+            return id;
         }
 
-        captureBtn.onclick = () => {
+        const devID = getDeviceID();
+        let usage = parseInt(localStorage.getItem('m_usage') || '0');
+        let isPremium = localStorage.getItem('m_premium') === 'true';
+
+        // UI Update
+        function updateDisplay() {
+            if (!isPremium && usage >= 10) {
+                document.getElementById('lock-screen').style.display = 'block';
+                document.getElementById('display-device-id').innerText = devID;
+                document.getElementById('wa-link').href = `https://wa.me/${MY_WHATSAPP}?text=Hi, I want to activate my app. My Device ID is: ${devID}`;
+            }
+            const msg = document.getElementById('trial-msg');
+            msg.innerText = isPremium ? "PREMIUM ACCESS: ACTIVE" : `फ्री ट्रायल बाकी: ${10 - usage}`;
+            msg.style.background = isPremium ? "#22c55e" : "#ef4444";
+        }
+
+        // 2. Activation Logic (Anti-Share)
+        function validateCode() {
+            const input = document.getElementById('act-code').value.trim();
+            // सिक्योरिटी लॉजिक: ID का उल्टा + 2026 = आपका सीक्रेट कोड
+            const correctCode = devID.split('').reverse().join('') + "26"; 
+
+            if (input === correctCode) {
+                localStorage.setItem('m_premium', 'true');
+                alert("बधाई हो! फुल एक्सेस एक्टिवेट हो गया है।");
+                location.reload();
+            } else {
+                alert("गलत कोड! कृपया पेमेंट के बाद व्हाट्सएप से कोड प्राप्त करें।");
+            }
+        }
+
+        function startScan() {
+            if (!isPremium) {
+                usage++;
+                localStorage.setItem('m_usage', usage);
+            }
+            
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-
-            // Basic Quality Filter
-            const data = ctx.getImageData(0,0, canvas.width, canvas.height).data;
-            let bright = 0;
-            for(let i=0; i<data.length; i+=40) bright += data[i];
-            if(bright/(data.length/40) < 30) { alert("रोशनी कम है!"); return; }
-
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
             video.style.display = 'none';
             canvas.style.display = 'block';
-            captureBtn.style.display = 'none';
-            document.getElementById('instruction').innerText = "जहाँ डिफेक्ट है, वहाँ टच करें।";
-
-            canvas.onclick = (e) => {
-                const rect = canvas.getBoundingClientRect();
-                marker.style.left = (e.clientX - rect.left) + 'px';
-                marker.style.top = (e.clientY - rect.top) + 'px';
-                marker.style.display = 'block';
-                
-                setTimeout(() => {
-                    const prob = prompt("क्या समस्या है?\n1. Flash\n2. Short Mold\n3. Burn Mark");
-                    if(prob) showFinalResult(prob);
-                }, 200);
-            };
-        };
-
-        function showFinalResult(type) {
-            const mat = document.getElementById('materialSelect').value;
-            const resBox = document.getElementById('result-display');
-            resBox.style.display = 'block';
-            document.getElementById('instruction').style.display = 'none';
-
-            const db = materialDB[mat];
-            document.getElementById('res-mat').innerText = mat;
-            document.getElementById('res-specs').innerText = `Temp: ${db.temp} | Dry: ${db.dry}`;
+            document.getElementById('scan-btn').style.display = 'none';
+            document.getElementById('res-card').style.display = 'block';
             
-            let solutions = "";
-            if(type == "1") {
-                solutions = "• क्लैम्पिंग प्रेशर बढ़ाएं।<br>• इंजेक्शन स्पीड 10% कम करें।";
-            } else if(type == "2") {
-                solutions = "• शॉट साइज बढ़ाएं।<br>• इंजेक्शन प्रेशर बढ़ाएं।";
-            } else {
-                solutions = "• वेंटिंग चेक करें।<br>• तापमान 5°C कम करें।";
-            }
-            document.getElementById('res-steps').innerHTML = `<strong>समाधान:</strong><br>${solutions}`;
-
-            // Save to LocalStorage History
-            let history = JSON.parse(localStorage.getItem('molding_history') || '[]');
-            history.unshift({ date: new Date().toLocaleString(), mat: mat, issue: type == "1" ? "Flash" : "Other" });
-            localStorage.setItem('molding_history', JSON.stringify(history));
+            // डायग्नोसिस सिमुलेशन
+            const mat = document.getElementById('material').value;
+            document.getElementById('res-content').innerHTML = `
+                <b>Material:</b> ${mat}<br>
+                <b>Problem:</b> Clamping Force Insufficient<br>
+                <b>Solution:</b> Increase tonnage by 10% and clean parting lines.
+            `;
+            updateDisplay();
         }
 
-        function renderHistory() {
-            const list = document.getElementById('history-list');
-            const history = JSON.parse(localStorage.getItem('molding_history') || '[]');
-            list.innerHTML = history.map(h => `
-                <div class="card">
-                    <small>${h.date}</small><br>
-                    <strong>${h.mat}</strong> - ${h.issue} Resolved
-                </div>
-            `).join('');
-        }
-
-        function exportToExcel() {
-            const history = JSON.parse(localStorage.getItem('molding_history') || '[]');
-            let csv = "Date,Material,Issue\n" + history.map(h => `${h.date},${h.mat},${h.issue}`).join('\n');
-            const blob = new Blob([csv], {type: 'text/csv'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'Molding_Report.csv';
-            a.click();
-        }
-
-        function resetScan() { location.reload(); }
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => video.srcObject = s);
+        updateDisplay();
     </script>
 </body>
 </html>

@@ -3,110 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drawing Font Matcher - Subrata Roy</title>
+    <title>Main Drawing Font Updater</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #333; }
-        #video { width: 100%; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 10px; }
-        .btn { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin: 5px; }
-        .btn:disabled { background: #ccc; }
-        #status { margin: 15px 0; font-weight: bold; color: #555; }
-        #result-box { background: #e9ecef; padding: 10px; border-radius: 5px; margin-top: 10px; font-family: monospace; }
+        body { font-family: Arial, sans-serif; text-align: center; background: #222; color: white; padding: 10px; }
+        .main-box { background: #333; padding: 15px; border-radius: 10px; max-width: 500px; margin: auto; }
+        video { width: 100%; border-radius: 8px; border: 2px solid #555; }
+        .btn { width: 100%; padding: 15px; margin-top: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-scan { background: #007bff; color: white; }
+        .btn-update { background: #28a745; color: white; }
+        #output-text { color: #00ff00; font-size: 20px; margin: 10px 0; display: block; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Drawing Font Matching Tool</h2>
-    <p>Physical part ke text ko scan karein aur drawing update karein.</p>
-    
+<div class="main-box">
+    <h3>Drawing Font Matcher</h3>
     <video id="video" autoplay playsinline></video>
-    <canvas id="canvas" style="display:none;"></canvas>
+    <span id="output-text">Scanning...</span>
     
-    <div>
-        <button class="btn" id="snap">Part Scan Karein</button>
-        <button class="btn" id="generate" disabled>Updated Drawing Download Karein</button>
-    </div>
-
-    <div id="status">Status: Camera ready</div>
-    
-    <div id="result-box">
-        <strong>Detected Text:</strong> <span id="scannedText">---</span>
-    </div>
+    <button class="btn btn-scan" id="captureBtn">Part Scan Karein</button>
+    <button class="btn btn-update" id="downloadBtn" disabled>Update Main Drawing</button>
 </div>
 
 <script>
     const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const snap = document.getElementById('snap');
-    const generate = document.getElementById('generate');
-    const status = document.getElementById('status');
-    const scannedTextDisplay = document.getElementById('scannedText');
+    const outText = document.getElementById('output-text');
+    const downloadBtn = document.getElementById('downloadBtn');
+    let detectedMaterial = "";
 
-    let finalDetectedText = "";
-
-    // Camera Access
-    async function setupCamera() {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        video.srcObject = stream;
-    }
-
-    setupCamera();
+    // Camera Start
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => { video.srcObject = stream; })
+        .catch(() => { alert("Camera Access Denied"); });
 
     // OCR Logic
-    snap.addEventListener('click', async () => {
-        status.innerText = "Scanning Text... Kripya wait karein";
+    document.getElementById('captureBtn').addEventListener('click', async () => {
+        outText.innerText = "Reading Part Font...";
+        const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
         
-        const imageData = canvas.toDataURL('image/png');
-        
-        Tesseract.recognize(imageData, 'eng')
-            .then(({ data: { text } }) => {
-                // Safai: Sirf relevant material code filter karna (e.g., PP+EPM)
-                finalDetectedText = text.trim();
-                scannedTextDisplay.innerText = finalDetectedText;
-                status.innerText = "Scan Complete!";
-                generate.disabled = false;
-            })
-            .catch(err => {
-                status.innerText = "Error: Dobara koshish karein";
-                console.error(err);
-            });
+        const result = await Tesseract.recognize(canvas.toDataURL(), 'eng');
+        detectedMaterial = result.data.text.trim();
+        outText.innerText = "Detected: " + detectedMaterial;
+        downloadBtn.disabled = false;
     });
 
-    // PDF Generation (Drawing Update)
-    generate.addEventListener('click', () => {
+    // Main Drawing PDF Update Logic
+    downloadBtn.addEventListener('click', () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
 
-        status.innerText = "Generating Drawing PDF...";
-
-        // Layout Simulation (As per Drawing [cite: 1, 4])
-        doc.setFont("helvetica", "bold");
-        doc.text("TECHNICAL DRAWING UPDATE", 70, 20);
+        // Font Settings (Matching physical part)
+        doc.setFont("courier", "bold"); 
         
-        // Detail H 
-        doc.setFontSize(10);
-        doc.text("DETAIL H (SCALE 1:1)", 20, 50);
-        doc.rect(20, 55, 60, 30); // Box simulation
-        doc.text(finalDetectedText, 30, 75); // Part se scan kiya gaya font
-
-        // Detail J [cite: 7, 8]
-        doc.text("DETAIL J (SCALE 1:1)", 20, 100);
-        doc.rect(20, 105, 60, 30);
-        doc.text(finalDetectedText, 30, 125);
-
-        // Footer info from original drawing [cite: 1]
+        // Header info from Original Drawing
         doc.setFontSize(8);
-        doc.text("Ref Drawing: Subrata Roy_FRONT_MUDFLAP_ENGV_24.01.2026", 20, 280);
+        doc.text("Drawing: Subrata Roy_FRONT_MUDFLAP_ENGV_24.01.2026", 10, 10);
 
-        doc.save("Updated_Drawing.pdf");
-        status.innerText = "Drawing Downloaded!";
+        // Update Detail H Area
+        doc.setFontSize(12);
+        doc.text("DETAIL H (SCALE 1:1)", 20, 60);
+        doc.setDrawColor(0);
+        doc.rect(20, 65, 80, 40); // Detail box
+        // Font update here
+        doc.text("> " + detectedMaterial + " <", 35, 85); 
+
+        // Update Detail J Area
+        doc.text("DETAIL J (SCALE 1:1)", 20, 130);
+        doc.rect(20, 135, 80, 40);
+        // Font update here
+        doc.text("> " + detectedMaterial + " <", 35, 155);
+
+        // Save
+        doc.save("Final_Updated_Drawing.pdf");
+        outText.innerText = "Drawing Downloaded!";
     });
 </script>
 

@@ -3,86 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Main Drawing Font Updater</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <title>Molding Troubleshooter AI</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #222; color: white; padding: 10px; }
-        .main-box { background: #333; padding: 15px; border-radius: 10px; max-width: 500px; margin: auto; }
-        video { width: 100%; border-radius: 8px; border: 2px solid #555; }
-        .btn { width: 100%; padding: 15px; margin-top: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-scan { background: #007bff; color: white; }
-        .btn-update { background: #28a745; color: white; }
-        #output-text { color: #00ff00; font-size: 20px; margin: 10px 0; display: block; }
+        body { font-family: sans-serif; margin: 0; background: #f4f4f4; text-align: center; }
+        #camera-container { width: 100%; max-width: 500px; margin: auto; position: relative; background: #000; overflow: hidden; }
+        video, canvas { width: 100%; display: block; }
+        #marker { position: absolute; width: 30px; height: 30px; border: 3px solid yellow; border-radius: 50%; pointer-events: none; display: none; transform: translate(-50%, -50%); }
+        .controls { padding: 20px; }
+        button { padding: 15px 25px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        #result-card { display: none; background: white; margin: 20px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: left; }
+        .ad-space { margin-top: 20px; padding: 10px; background: #eee; border: 1px dashed #ccc; font-size: 12px; }
     </style>
 </head>
 <body>
 
-<div class="main-box">
-    <h3>Drawing Font Matcher</h3>
-    <video id="video" autoplay playsinline></video>
-    <span id="output-text">Scanning...</span>
-    
-    <button class="btn btn-scan" id="captureBtn">Part Scan Karein</button>
-    <button class="btn btn-update" id="downloadBtn" disabled>Update Main Drawing</button>
-</div>
+    <h2>Injection Molding Flash Detector</h2>
 
-<script>
-    const video = document.getElementById('video');
-    const outText = document.getElementById('output-text');
-    const downloadBtn = document.getElementById('downloadBtn');
-    let detectedMaterial = "";
+    <div id="camera-container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <div id="marker"></div>
+    </div>
 
-    // Camera Start
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(stream => { video.srcObject = stream; })
-        .catch(() => { alert("Camera Access Denied"); });
+    <div class="controls">
+        <button id="capture-btn">फ़ोटो लें (Capture)</button>
+        <p id="hint" style="display:none;">जहाँ फ्लैश है, वहां टच करें</p>
+    </div>
 
-    // OCR Logic
-    document.getElementById('captureBtn').addEventListener('click', async () => {
-        outText.innerText = "Reading Part Font...";
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
+    <div id="result-card">
+        <h3 id="problem-title" style="color: #d9534f;"></h3>
+        <p><strong>समाधान (Solution):</strong></p>
+        <ul id="solution-list"></ul>
+        <button onclick="location.reload()" style="background:#6c757d;">फिर से शुरू करें</button>
         
-        const result = await Tesseract.recognize(canvas.toDataURL(), 'eng');
-        detectedMaterial = result.data.text.trim();
-        outText.innerText = "Detected: " + detectedMaterial;
-        downloadBtn.disabled = false;
-    });
+        <div class="ad-space">
+            Advertisement <br>
+            </div>
+    </div>
 
-    // Main Drawing PDF Update Logic
-    downloadBtn.addEventListener('click', () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const marker = document.getElementById('marker');
+        const captureBtn = document.getElementById('capture-btn');
+        const resultCard = document.getElementById('result-card');
+        const hint = document.getElementById('hint');
 
-        // Font Settings (Matching physical part)
-        doc.setFont("courier", "bold"); 
-        
-        // Header info from Original Drawing
-        doc.setFontSize(8);
-        doc.text("Drawing: Subrata Roy_FRONT_MUDFLAP_ENGV_24.01.2026", 10, 10);
+        // कैमरा शुरू करें
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => alert("Camera access denied"));
 
-        // Update Detail H Area
-        doc.setFontSize(12);
-        doc.text("DETAIL H (SCALE 1:1)", 20, 60);
-        doc.setDrawColor(0);
-        doc.rect(20, 65, 80, 40); // Detail box
-        // Font update here
-        doc.text("> " + detectedMaterial + " <", 35, 85); 
+        captureBtn.addEventListener('click', () => {
+            // फ़ोटो फ्रीज करें
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+            captureBtn.style.display = 'none';
+            hint.style.display = 'block';
+        });
 
-        // Update Detail J Area
-        doc.text("DETAIL J (SCALE 1:1)", 20, 130);
-        doc.rect(20, 135, 80, 40);
-        // Font update here
-        doc.text("> " + detectedMaterial + " <", 35, 155);
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
 
-        // Save
-        doc.save("Final_Updated_Drawing.pdf");
-        outText.innerText = "Drawing Downloaded!";
-    });
-</script>
+            // मार्कर दिखाएँ
+            marker.style.left = x + 'px';
+            marker.style.top = y + 'px';
+            marker.style.display = 'block';
 
+            // समस्या का चयन करने के लिए पूछें
+            askProblem();
+        });
+
+        function askProblem() {
+            const type = confirm("क्या फ्लैश पतला और रेशे जैसा है? (Ok = पतला, Cancel = मोटा/सख्त)");
+            showResult(type ? 'thin' : 'thick');
+        }
+
+        function showResult(type) {
+            hint.style.display = 'none';
+            resultCard.style.display = 'block';
+            const title = document.getElementById('problem-title');
+            const list = document.getElementById('solution-list');
+            list.innerHTML = "";
+
+            if (type === 'thin') {
+                title.innerText = "संभावित समस्या: कम चिपचिपाहट (Thin Flash)";
+                const solutions = ["तापमान 10°C कम करें", "इंजेक्शन की गति धीमी करें", "होल्डिंग प्रेशर कम करें"];
+                solutions.forEach(s => list.innerHTML += `<li>${s}</li>`);
+            } else {
+                title.innerText = "संभावित समस्या: क्लैम्पिंग फोर्स की कमी (Thick Flash)";
+                const solutions = ["मशीन का टनेज (Tonnage) बढ़ाएं", "मोल्ड की पार्टिंग लाइन साफ़ करें", "इंजेक्शन प्रेशर कम करें"];
+                solutions.forEach(s => list.innerHTML += `<li>${s}</li>`);
+            }
+        }
+    </script>
 </body>
 </html>

@@ -3,37 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Molding AI Pro - Enterprise Edition</title>
+    <title>Molding AI Pro - Professional Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --primary: #00d2ff; --success: #00ff88; --danger: #ff0055; --bg: #050a14; --card: #1e293b; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: white; text-align: center; user-select: none; }
-        
-        /* Layout */
         .header { background: var(--card); padding: 15px; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
         .container { max-width: 500px; margin: auto; padding: 10px; }
-        
-        /* Stats & Inputs */
         .stat-bar { display: flex; justify-content: space-around; background: #0f172a; padding: 10px; border-radius: 12px; margin-bottom: 15px; font-size: 12px; border: 1px solid #334155; }
         .m-input { width: 90%; padding: 12px; border-radius: 10px; border: 1px solid var(--primary); background: #0f172a; color: white; margin-bottom: 10px; text-align: center; }
-
-        /* AI Camera UI */
-        #camera-wrapper { position: relative; border-radius: 20px; overflow: hidden; border: 2px solid #334155; box-shadow: 0 0 25px rgba(0,210,255,0.2); cursor: crosshair; }
+        #camera-wrapper { position: relative; border-radius: 20px; overflow: hidden; border: 2px solid #334155; cursor: crosshair; }
         video, canvas { width: 100%; display: block; }
         .scan-line { position: absolute; height: 3px; width: 100%; background: var(--primary); top: 0; display: none; animation: move 2s linear infinite; }
         @keyframes move { from { top: 0; } to { top: 100%; } }
-        .marker { position: absolute; width: 25px; height: 25px; border: 3px solid var(--danger); border-radius: 50%; display: none; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px var(--danger); }
-
-        /* Buttons & Ad Slots */
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .marker { position: absolute; width: 25px; height: 25px; border: 3px solid var(--danger); border-radius: 50%; display: none; transform: translate(-50%, -50%); pointer-events: none; }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-scan { background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: white; }
         .btn-pdf { background: var(--success); color: #050a14; display: none; margin-top: 15px; }
-        .ad-slot { background: rgba(255,255,255,0.05); border: 1px dashed #334155; border-radius: 8px; margin: 10px 0; padding: 10px; font-size: 10px; color: #555; }
-
-        /* Lock & Panels */
+        .ad-slot { background: rgba(255,255,255,0.05); border: 1px dashed #334155; border-radius: 8px; margin: 10px 0; padding: 10px; font-size: 10px; }
         #lock-screen { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 10000; padding: 20px; overflow-y: auto; }
-        .res-panel { display: none; background: white; color: #1e293b; border-radius: 20px; padding: 25px; text-align: left; margin-top: 15px; animation: slideUp 0.4s; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+        .res-panel { display: none; background: white; color: #1e293b; border-radius: 20px; padding: 25px; text-align: left; margin-top: 15px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -41,31 +30,24 @@
     <div id="lock-screen">
         <div style="background:white; color:#000; padding:25px; border-radius:25px; text-align:center;">
             <h2 style="color:var(--danger); margin:0;">TRIAL EXPIRED 🔒</h2>
-            <p style="font-size:13px;">Device ID: <b id="display-id" style="color:red;"></b></p>
-            <div style="background:#f1f5f9; padding:15px; border-radius:15px; margin:15px 0; text-align:left; font-size:14px;">
-                <b>Premium Benefits:</b><br>
-                • Lifetime Unlocked Scans<br>
-                • Professional PDF Reports<br>
-                • Multi-Machine Tracking<br>
-                • Direct Expert Support
-            </div>
-            <a id="wa-link" href="#" style="background:#25D366; color:white; text-decoration:none; display:block; padding:15px; border-radius:12px; font-weight:bold;">WHATSAPP FOR ACTIVATION</a>
-            <input type="text" id="act-code" placeholder="Enter Activation Code" style="width:85%; padding:12px; margin-top:20px; border:2px solid #ddd; border-radius:10px; text-align:center;">
+            <p>Device ID: <b id="display-id" style="color:red; font-size: 20px;"></b></p>
+            <a id="wa-link" href="#" style="background:#25D366; color:white; text-decoration:none; display:block; padding:15px; border-radius:12px; font-weight:bold; margin: 15px 0;">WHATSAPP FOR ACTIVATION</a>
+            <input type="text" id="act-code" placeholder="Enter Activation Code" style="width:85%; padding:12px; border:2px solid #ddd; border-radius:10px; text-align:center; font-size: 18px; text-transform: uppercase;">
             <button class="btn" style="background:#050a14; color:white;" onclick="validateCode()">ACTIVATE NOW</button>
         </div>
     </div>
 
     <div class="header">
-        <span>MOLDING AI PRO 7.9</span>
-        <span style="color:var(--success); font-size:12px;">● LIVE CLOUD SYNC</span>
+        <span>MOLDING AI PRO 8.0</span>
+        <span style="color:var(--success); font-size:12px;">● SYSTEM READY</span>
     </div>
 
     <div class="container">
-        <div class="ad-slot">ADSTERRA BANNER AD (728x90)</div>
+        <div class="ad-slot">ADSTERRA BANNER AD CODE HERE</div>
 
         <div class="stat-bar">
             <div>ACCURACY: <span style="color:var(--success);">98.4%</span></div>
-            <div>STATUS: <span style="color:var(--primary);">ENTERPRISE</span></div>
+            <div>STATUS: <span style="color:var(--primary);">ACTIVE</span></div>
         </div>
 
         <input type="text" id="machine-id" class="m-input" placeholder="MACHINE ID (e.g. M-01)">
@@ -88,16 +70,18 @@
             <button onclick="location.reload()" style="width:100%; margin-top:10px; padding:10px; border:none; background:#f1f5f9; border-radius:8px; font-weight:bold;">NEW DIAGNOSIS</button>
         </div>
 
-        <div class="ad-slot">ADSTERRA NATIVE AD UNIT</div>
+        <div class="ad-slot">ADSTERRA NATIVE AD CODE HERE</div>
     </div>
 
     <script>
         const MY_NUMBER = "7007988236";
-        const AD_LINK = "https://your-adsterra-direct-link.com"; // अपनी लिंक यहाँ डालें
         
+        // --- रिवेन्यू लिंक (Scanning से हटा दिया गया है) ---
         let usage = parseInt(localStorage.getItem('m_usage') || '0');
         let isPremium = localStorage.getItem('m_premium') === 'true';
-        let devID = localStorage.getItem('m_dev_id') || ('AI-' + Math.random().toString(36).substr(2, 6).toUpperCase());
+        
+        // Device ID को फिक्स किया गया है (अगर नहीं है तो ही नई बनाएगा)
+        let devID = localStorage.getItem('m_dev_id') || ('MOLD-' + Math.random().toString(36).substr(2, 5).toUpperCase());
         localStorage.setItem('m_dev_id', devID);
 
         const video = document.getElementById('video');
@@ -115,15 +99,13 @@
         async function runNeuralScan() {
             if (!isPremium && usage >= 10) { showLock(); return; }
             
-            // Show Ad
-            window.open(AD_LINK, '_blank');
-            
+            // विज्ञापन हटा दिया गया है, सीधे स्कैन शुरू होगा
             document.getElementById('scan-line').style.display = 'block';
             document.getElementById('scan-btn').innerText = "TEXTURE MAPPING...";
             
-            await new Promise(r => setTimeout(r, 2500));
+            await new Promise(r => setTimeout(r, 2000));
             
-            const choice = prompt("Select Issue Type:\n1. Flash\n2. Short Mold\n3. Burn Mark");
+            const choice = prompt("Select Issue:\n1. Flash\n2. Short Mold\n3. Burn Mark");
             if(!choice) { location.reload(); return; }
 
             usage++;
@@ -134,37 +116,26 @@
             document.getElementById('scan-btn').style.display = 'none';
             document.getElementById('res-panel').style.display = 'block';
             document.getElementById('pdf-btn').style.display = 'block';
-            document.getElementById('res-machine').innerText = "UNIT: " + (document.getElementById('machine-id').value || "GENERIC UNIT");
+            document.getElementById('res-machine').innerText = "UNIT: " + (document.getElementById('machine-id').value || "GENERIC");
 
             const body = document.getElementById('res-body');
             const sol = {
                 "1": "<b>Defect: Flash</b><br>• Increase Clamping Tonnage.<br>• Reduce injection speed by 10%.",
-                "2": "<b>Defect: Short Fill</b><br>• Increase shot size/pressure.<br>• Raise melt temp by 5-10°C.",
+                "2": "<b>Defect: Short Fill</b><br>• Increase shot size/pressure.<br>• Raise melt temp by 5°C.",
                 "3": "<b>Defect: Burn Mark</b><br>• Clean gas vents at highlighted spot.<br>• Lower back pressure."
             };
-            body.innerHTML = sol[choice] || "Anomaly undetected. Please re-scan.";
+            body.innerHTML = sol[choice] || "Anomaly undetected.";
             window.activeDefect = sol[choice].split('<b>')[1].split('</b>')[0];
         }
 
         function generateReport() {
-            window.open(AD_LINK, '_blank');
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFillColor(5, 10, 20);
-            doc.rect(0, 0, 210, 30, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(20);
-            doc.text("MOLDING AI ENTERPRISE REPORT", 20, 20);
-            
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(12);
-            doc.text("Date: " + new Date().toLocaleString(), 20, 45);
-            doc.text("Machine ID: " + (document.getElementById('machine-id').value || "N/A"), 20, 55);
-            doc.text("Issue Type: " + window.activeDefect, 20, 65);
-            doc.text("--------------------------------------------------", 20, 75);
-            doc.text("RECOMMENDATIONS:", 20, 85);
-            doc.text(document.getElementById('res-body').innerText, 20, 95);
-            doc.save("Molding_Report.pdf");
+            doc.text("MOLDING AI REPORT", 20, 20);
+            doc.text("Machine ID: " + (document.getElementById('machine-id').value || "N/A"), 20, 40);
+            doc.text("Issue: " + window.activeDefect, 20, 50);
+            doc.text("Date: " + new Date().toLocaleString(), 20, 60);
+            doc.save("Report.pdf");
         }
 
         function showLock() {
@@ -174,12 +145,19 @@
         }
 
         function validateCode() {
-            const input = document.getElementById('act-code').value.trim();
-            if(input === (devID.split('').reverse().join('') + "26") || input === "RESET99") {
+            // इनपुट को साफ़ करना (Spaces हटाना और UpperCase में बदलना)
+            const input = document.getElementById('act-code').value.trim().toUpperCase();
+            
+            // पक्का रिवर्स लॉजिक
+            const correct = devID.split('').reverse().join('').toUpperCase() + "26";
+            
+            if(input === correct || input === "RESET99") {
                 localStorage.setItem('m_premium', 'true');
-                alert("SUCCESS: Premium Activated!");
+                alert("एक्टिवेशन सफल! 👑");
                 location.reload();
-            } else { alert("INVALID CODE."); }
+            } else { 
+                alert("गलत कोड! कृपया सही कोड डालें।"); 
+            }
         }
 
         if(!isPremium && usage >= 10) showLock();
